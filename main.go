@@ -71,9 +71,15 @@ func main() {
 		log.Fatalf("No suitable audio format found")
 	}
 
-	tempAudioPath := "/home/veikko/Desktop/NewMusic/" + video.Title + ".m4a"
-	// tempAudioPath := filepath.Join(os.TempDir(), video.Title+".m4a")
-	finalMp3Path := "/home/veikko/Desktop/NewMusic/" + video.Title + ".mp3"
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	tempAudioPath := homeDir + "/Desktop/" + video.Title + ".m4a"
+	finalMp3Path := homeDir + "/Desktop/" + video.Title + ".mp3"
+
+	
 
 	err = downloadAudioStream(video, audioFormat, tempAudioPath)
 	if err != nil {
