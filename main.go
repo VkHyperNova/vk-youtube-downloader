@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
+	
 
 	"github.com/kkdai/youtube/v2"
 )
@@ -71,8 +71,9 @@ func main() {
 		log.Fatalf("No suitable audio format found")
 	}
 
-	tempAudioPath := filepath.Join(os.TempDir(), video.Title+".m4a")
-	finalMp3Path := video.Title + ".mp3"
+	tempAudioPath := "/home/veikko/Desktop/NewMusic/" + video.Title + ".m4a"
+	// tempAudioPath := filepath.Join(os.TempDir(), video.Title+".m4a")
+	finalMp3Path := "/home/veikko/Desktop/NewMusic/" + video.Title + ".mp3"
 
 	err = downloadAudioStream(video, audioFormat, tempAudioPath)
 	if err != nil {
