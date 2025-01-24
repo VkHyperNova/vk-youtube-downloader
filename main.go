@@ -2,37 +2,20 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/exec"
-	
-
-	"github.com/kkdai/youtube/v2"
+	"regexp"
 )
 
-// downloadAudioStream downloads the audio stream of a YouTube video.
-func downloadAudioStream(video *youtube.Video, format *youtube.Format, outputPath string) error {
-	client := youtube.Client{}
-
-	resp, _, err := client.GetStream(video, format)
-	if err != nil {
-		return fmt.Errorf("error getting video stream: %v", err)
-	}
-	defer resp.Close()
-
-	outFile, err := os.Create(outputPath)
-	if err != nil {
-		return fmt.Errorf("error creating file: %v", err)
-	}
-	defer outFile.Close()
-
-	_, err = io.Copy(outFile, resp)
-	if err != nil {
-		return fmt.Errorf("error writing to file: %v", err)
-	}
-
-	return nil
+// downloadAudioWithYtDlp downloads the audio stream using yt-dlp
+func downloadAudioWithYtDlp(videoURL, outputPath string) error {
+    cmd := exec.Command("yt-dlp", "--no-playlist", "-x", "--audio-format", "m4a", "-o", outputPath, videoURL)
+    output, err := cmd.CombinedOutput()
+    if err != nil {
+        return fmt.Errorf("yt-dlp error: %v\n%s", err, string(output))
+    }
+    return nil
 }
 
 // convertToMp3 converts the given audio file to MP3 format using ffmpeg.
@@ -45,6 +28,25 @@ func convertToMp3(inputPath, outputPath string) error {
 	return nil
 }
 
+// getVideoTitle fetches the title of a YouTube video using yt-dlp
+func getVideoTitle(videoURL string) (string, error) {
+    cmd := exec.Command("yt-dlp", "--no-playlist", "--print", "%(title)s", videoURL)
+    output, err := cmd.Output()
+    if err != nil {
+        return "", fmt.Errorf("yt-dlp error: %v\n%s", err, string(output))
+    }
+    return string(output), nil
+}
+
+// sanitizeFilename removes or replaces unsafe characters from filenames
+func sanitizeFilename(name string) string {
+	// Remove invalid characters such as slashes, colons, etc.
+	re := regexp.MustCompile(`[<>:"/\\|?*]+`)
+	name = re.ReplaceAllString(name, "_")
+	return name
+}
+
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: go run main.go <youtube-video-url>")
@@ -53,46 +55,42 @@ func main() {
 
 	videoURL := os.Args[1]
 
-	client := youtube.Client{}
-	video, err := client.GetVideo(videoURL)
+	// Get video title
+	videoTitle, err := getVideoTitle(videoURL)
 	if err != nil {
-		log.Fatalf("Error getting video info: %v", err)
+		log.Fatalf("Error getting video title: %v", err)
 	}
 
-	var audioFormat *youtube.Format
-	for _, format := range video.Formats {
-		if format.AudioChannels > 0 && format.ItagNo == 140 { // 140 typically represents m4a format
-			audioFormat = &format
-			break
-		}
-	}
+	// Sanitize video title for safe filename
+	videoTitle = sanitizeFilename(videoTitle)
 
-	if audioFormat == nil {
-		log.Fatalf("No suitable audio format found")
-	}
-
+	// Determine the user's desktop path
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatal(err)
 	}
-	
-	tempAudioPath := homeDir + "/Desktop/" + video.Title + ".m4a"
-	finalMp3Path := homeDir + "/Desktop/" + video.Title + ".mp3"
 
-	
+	// Define output file paths
+	tempAudioPath := fmt.Sprintf("%s/Desktop/%s.m4a", homeDir, videoTitle)
+	finalMp3Path := fmt.Sprintf("%s/Desktop/%s.mp3", homeDir, videoTitle)
 
-	err = downloadAudioStream(video, audioFormat, tempAudioPath)
+	fmt.Println("Downloading audio using yt-dlp...")
+
+	err = downloadAudioWithYtDlp(videoURL, tempAudioPath)
 	if err != nil {
-		log.Fatalf("Error downloading audio stream: %v", err)
+		log.Fatalf("Error downloading audio: %v", err)
 	}
+
+	fmt.Println("Converting audio to MP3...")
 
 	err = convertToMp3(tempAudioPath, finalMp3Path)
 	if err != nil {
 		log.Fatalf("Error converting to MP3: %v", err)
 	}
 
-	// Clean up the temporary file
+	// Clean up the temporary audio file
 	os.Remove(tempAudioPath)
 
 	fmt.Printf("Downloaded and converted audio to %s\n", finalMp3Path)
 }
+
