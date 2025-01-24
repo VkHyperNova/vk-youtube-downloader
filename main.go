@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strings"
 )
 
 // downloadAudioWithYtDlp downloads the audio stream using yt-dlp
@@ -40,9 +41,14 @@ func getVideoTitle(videoURL string) (string, error) {
 
 // sanitizeFilename removes or replaces unsafe characters from filenames
 func sanitizeFilename(name string) string {
-	// Remove invalid characters such as slashes, colons, etc.
-	re := regexp.MustCompile(`[<>:"/\\|?*]+`)
-	name = re.ReplaceAllString(name, "_")
+	// Remove invalid characters such as slashes, colons, spaces, newlines, etc.
+	re := regexp.MustCompile(`[<>:"/\\|?*\x00-\x1F\x7F]+`)
+	// Replace the special characters with underscores
+	name = re.ReplaceAllString(name, "")
+
+	// Optionally, remove leading and trailing spaces
+	name = strings.TrimSpace(name)
+
 	return name
 }
 
