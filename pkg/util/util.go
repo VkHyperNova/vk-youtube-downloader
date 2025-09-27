@@ -58,3 +58,12 @@ func ClearScreen() {
 		fmt.Fprintln(os.Stderr, "Error clearing screen:", err)
 	}
 }
+
+func CreateDirectory(dirName string) error {
+	// MkdirAll creates the directory along with parents if needed
+	err := os.MkdirAll(dirName, 0700)
+	if err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", dirName, err)
+	}
+	return nil
+}

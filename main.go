@@ -32,9 +32,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Define output file paths
-	tempAudioPath := fmt.Sprintf("%s/Desktop/%s.m4a", homeDir, videoTitle)
-	finalMp3Path := fmt.Sprintf("%s/Desktop/%s.mp3", homeDir, videoTitle)
+	util.CreateDirectory(fmt.Sprintf("%s/Desktop/NewMusic", homeDir))
+	tempAudioPath := fmt.Sprintf("%s/Desktop/NewMusic/%s.m4a", homeDir, videoTitle)
+	finalMp3Path := fmt.Sprintf("%s/Desktop//NewMusic/%s.mp3", homeDir, videoTitle)
 
 	fmt.Println("Downloading audio using yt-dlp...")
 
