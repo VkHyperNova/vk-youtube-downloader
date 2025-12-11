@@ -10,7 +10,8 @@ import (
 )
 
 func DownloadAudioWithYtDlp(videoURL, outputPath string) error {
-	cmd := exec.Command("yt-dlp",
+	
+	cmd := exec.Command("yt-dlp", "-U",
 		"--no-playlist",
 		"--newline",
 		"--progress",
